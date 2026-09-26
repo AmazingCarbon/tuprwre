@@ -14,6 +14,10 @@ starship_action_items.md
 orchid_action_items.md
 RELEASE_PROCESS.md
 
+# Local tool state (owner-local; not tracked)
+/.ua/
+/.graymatter/
+
 # OS noise
 .DS_Store
 
