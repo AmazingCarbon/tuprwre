@@ -172,6 +172,13 @@ func Build(events []event.Event, st LoadStats, opts Options) *Report {
 	bySession := map[string][]event.Event{}
 	first := map[string]time.Time{}
 	for _, e := range events {
+		// A sensor event without a process violates the effect contract.
+		// Load never passes one, but Build is exported: skip it rather
+		// than dereference a nil Process.
+		if e.Source == event.SourceSensor && e.Process == nil {
+			st.InvalidEffects++
+			continue
+		}
 		id := e.SessionID
 		if id == "" {
 			id = NoSession
