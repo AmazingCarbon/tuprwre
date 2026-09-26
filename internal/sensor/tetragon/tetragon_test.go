@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -208,6 +210,28 @@ func TestFileMapping(t *testing.T) {
 	}
 }
 
+// TestUpstreamFileArg runs the adapter over a real exported Tetragon
+// security_file_permission event vendored from upstream documentation under
+// testdata/upstream/. It pins the file_arg wire shape the adapter reads: the
+// KprobeFile fields (path, permission) sit directly on file_arg, not inside a
+// nested "file" message. See testdata/upstream/README.md for the source.
+func TestUpstreamFileArg(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("testdata", "upstream", "filename-access.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, _, events := record(t, string(raw), Options{})
+	if s.Errors() != 0 {
+		t.Fatalf("native errors = %d, want 0", s.Errors())
+	}
+	if len(events) != 1 || events[0].Kind != event.KindFileWrite {
+		t.Fatalf("events = %+v, want one file_write", events)
+	}
+	if got := events[0].File.Path; got != "/etc/passwd" {
+		t.Errorf("file path = %q, want /etc/passwd (file_arg shape regression?)", got)
+	}
+}
+
 // TestMalformedAndIncompleteRecords proves bad native records are counted as
 // errors, never emitted and never fatal.
 func TestMalformedAndIncompleteRecords(t *testing.T) {
@@ -245,6 +269,37 @@ func TestRunStopsOnCancel(t *testing.T) {
 }
 
 func intp(i int) *int { return &i }
+
+// errReader fails every Read with a fixed error, simulating a Tetragon export
+// file that becomes unreadable mid-stream.
+type errReader struct{ err error }
+
+func (e errReader) Read([]byte) (int, error) { return 0, e.err }
+
+// TestRunReturnsReadError proves a non-EOF reader failure is returned as the
+// source error, not treated as a clean end of stream.
+func TestRunReturnsReadError(t *testing.T) {
+	sentinel := errors.New("broken pipe")
+	r := io.MultiReader(strings.NewReader(`{"process_exec":{`+proc+`},"time":"2026-09-21T09:00:00Z"}`+"\n"), errReader{sentinel})
+	err := New(r, Options{}).Run(context.Background(), gateway.NewMemorySink())
+	if !errors.Is(err, sentinel) {
+		t.Fatalf("err = %v, want %v", err, sentinel)
+	}
+}
+
+// TestOversizedLineSkipped proves a record longer than MaxLineBytes is
+// discarded and counted, and reading continues with the next line.
+func TestOversizedLineSkipped(t *testing.T) {
+	input := strings.Repeat("a", MaxLineBytes+10) + "\n" +
+		`{"process_exec":{` + proc + `},"time":"2026-09-21T09:00:00Z"}` + "\n"
+	s, _, events := record(t, input, Options{})
+	if s.Errors() != 1 {
+		t.Errorf("errors = %d, want 1", s.Errors())
+	}
+	if len(events) != 1 || events[0].Kind != event.KindExec {
+		t.Errorf("events = %+v, want one exec", events)
+	}
+}
 
 // TestSplitArguments pins the inverse of Tetragon's argument encoding
 // (pkg/sensors/exec resolveArgs): single-space joins, double quotes around an

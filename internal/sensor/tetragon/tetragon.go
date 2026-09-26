@@ -21,7 +21,10 @@
 // The mapping was cross-checked against Tetragon's source (argument quoting in
 // pkg/sensors/exec, exit status in pkg/grpc/exec, kprobe argument names in
 // api/v1/tetragon) at cilium/tetragon a58fbc7, and against the recorded event
-// samples in Tetragon's documentation (see TestUpstreamRecordedSamples). It
+// samples in Tetragon's documentation (see TestUpstreamRecordedSamples). The
+// kprobe argument wire shapes, including file_arg (KprobeFile: path and
+// permission directly, not nested under a "file" message), are pinned in CI by
+// the vendored upstream sample in testdata/upstream (TestUpstreamFileArg). It
 // has not been run against a live Tetragon agent.
 package tetragon
 
