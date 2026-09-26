@@ -9,6 +9,11 @@ This repo hosts two tools.
 tprsh is **not a sandbox**. Do not add confinement/enforce hardening
 (Seatbelt/srt) or sandbox features.
 
+The legacy `tprsh` shell/sandbox (`cmd/tprsh`, `internal/tprsh`, `testlab/`,
+`contrib/claude-code/`) was **removed on this branch** (`feat/tprsh-gateway`).
+The active tprsh tools are `tprsh-gateway` (intent), `tprsh-sensor` (effects),
+and `tprsh-report` (reconciliation + tiers).
+
 ## Git
 
 - Never push to or merge into `main`. Work on feature branches; the owner merges PRs.
@@ -36,8 +41,3 @@ tprsh is **not a sandbox**. Do not add confinement/enforce hardening
 - Core must work with **zero** harness-specific adapters; hooks are optional extras.
 - Remote classifiers / LLM monitors are optional plugins, never core.
 - Redaction is default-on before anything is persisted or leaves the machine.
-
-## Local edits
-
-- Do not modify `cmd/tprsh/main.go` — the owner has an uncommitted local edit
-  there. Add new code in new packages or binaries.

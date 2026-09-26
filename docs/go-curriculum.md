@@ -1,5 +1,13 @@
 # Go curriculum — from Python 3, through this codebase
 
+> **Note (legacy shell removed).** The legacy `tprsh` shell (`cmd/tprsh`,
+> `internal/tprsh`) and `testlab/` were removed on the `feat/tprsh-gateway`
+> branch. Exercises below that referenced those paths now target the active
+> `tprsh` binaries instead: `cmd/tprsh-gateway` (intent recording),
+> `cmd/tprsh-sensor` (effects), `cmd/tprsh-report` (reconciliation + tiers),
+> and their packages under `internal/` (`gateway`, `sensor`, `report`,
+> `rules`, `classify`). Read the curriculum as-is otherwise.
+
 *Learner profile: fluent Python 3 thinking, strong shell, year of vibe-coding. Goal:
 read and write Go for real, using tuprwre/tprsh as the textbook. Driven by the
 `/go-tutor` skill — the tutor reads this file, resumes at the first unchecked lesson,

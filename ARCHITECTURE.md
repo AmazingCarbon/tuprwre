@@ -1,6 +1,27 @@
-# tuprwre Architecture
+# Architecture
 
-## Overview
+This repo hosts two tools. **`tprsh`** (record / react / rebound for
+unattended agents) is the active work; **`tuprwre`** (Docker installs + shims)
+is **frozen / maintenance only**.
+
+## tprsh
+
+`tprsh` is local-first and harness-agnostic, and is **not a sandbox** — it
+records, reconciles, and (optionally) reacts. Three binaries, one pipeline:
+
+| binary | layer | what it does | docs |
+|---|---|---|---|
+| `tprsh-gateway` | intent | record-only, harness-agnostic LLM gateway: records every tool-call intent (and result) from the wire | [docs/gateway.md](docs/gateway.md) |
+| `tprsh-sensor` | effects | records host-level effects from Tetragon and pairs them with gateway sessions | [docs/sensor.md](docs/sensor.md) |
+| `tprsh-report` | reconciliation | reconciles recorded intent against observed effects into deterministic tiers (green / yellow / red) | [docs/report.md](docs/report.md) |
+
+The fixed rules (`internal/rules`) are deterministic and local; an optional
+classifier plugin ([docs/classifier.md](docs/classifier.md)) adds an advisory
+second opinion but never changes a tier and is never core. Redaction is
+default-on before anything is persisted. See [docs/HANDOFF.md](docs/HANDOFF.md)
+for current state.
+
+## tuprwre (frozen)
 
 tuprwre is a CLI tool that sandboxes shell script installations and provides transparent execution through generated shim scripts. It bridges the gap between "I want to run this install script" and "I want the installed tools available on my host system" without polluting the host environment.
 

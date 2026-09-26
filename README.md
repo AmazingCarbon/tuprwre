@@ -8,6 +8,41 @@
 [![License](https://img.shields.io/github/license/c4rb0nx1/tuprwre)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/c4rb0nx1/tuprwre)](https://github.com/c4rb0nx1/tuprwre/stargazers)
 
+This repo hosts two tools:
+
+- **`tprsh`** — active work. A local-first, harness-agnostic **record / react /
+  rebound** layer for unattended AI agents. It records what an agent *intended*
+  (`tprsh-gateway`, the intent-recording LLM gateway), what actually happened on
+  the host (`tprsh-sensor`, effects, via Tetragon), and reconciles the two into
+  tiered verdicts (`tprsh-report`: reconciliation + tiers), with an optional
+  classifier plugin for the uncertain middle. Start with:
+  [gateway](docs/gateway.md) · [sensor](docs/sensor.md) ·
+  [report](docs/report.md) · [classifier](docs/classifier.md) ·
+  [HANDOFF](docs/HANDOFF.md).
+- **`tuprwre`** — **frozen / maintenance only**. Intercepts and blocks risky
+  install commands (`apt`, `pip`, `curl/wget`), guiding users to run them safely
+  inside disposable Docker containers via `tuprwre install`, with shims so the
+  installed tools feel native on the host.
+
+### tprsh
+
+`tprsh` is **not a sandbox**: it records, reports, and (optionally) reacts. The
+three binaries and their docs:
+
+| binary | records | docs |
+|---|---|---|
+| `tprsh-gateway` (`cmd/tprsh-gateway`) | tool-call **intent** and results, from the LLM wire | [docs/gateway.md](docs/gateway.md) |
+| `tprsh-sensor` (`cmd/tprsh-sensor`) | OS-level **effects**, from Tetragon | [docs/sensor.md](docs/sensor.md) |
+| `tprsh-report` (`cmd/tprsh-report`) | reconciliation of intent vs. effects, into tiers | [docs/report.md](docs/report.md) |
+
+An optional classifier plugin ([docs/classifier.md](docs/classifier.md)) gives
+an advisory second opinion on the items the fixed rules leave uncertain; it is
+never core and never changes a tier on its own.
+
+---
+
+## tuprwre (frozen)
+
 `tuprwre` intercepts and blocks risky install commands (`apt`, `pip`, `curl/wget`), guiding users to run them safely inside disposable Docker containers via `tuprwre install`.
 
 [![Demo](https://asciinema.org/a/lGrhGS4fVlOgWuvO.svg)](https://asciinema.org/a/lGrhGS4fVlOgWuvO)
