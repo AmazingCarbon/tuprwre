@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+- Legacy `tprsh` shell/sandbox: `cmd/tprsh`, `internal/tprsh`, `testlab/`,
+  `contrib/claude-code/` (the old `tprsh-gate.sh` PreToolUse hook), and the
+  `bench-tprsh` Makefile target
+- `docs/onboarding-tour.md` (described only the removed shell)
+- `mvdan.cc/sh/v3` and `golang.org/x/term` dependencies (no longer referenced)
+
+### Changed
+- README and ARCHITECTURE now present `tuprwre` as frozen/maintenance and
+  describe the active `tprsh` tools: `tprsh-gateway` (intent), `tprsh-sensor`
+  (effects via Tetragon), `tprsh-report` (reconciliation + tiers), and the
+  optional classifier plugin
+- `.gitignore` ignores local `.ua/` and `.graymatter/` state directories
+
 ## [0.1.0-alpha.3] - 2026-03-01
 
 ### Fixed
