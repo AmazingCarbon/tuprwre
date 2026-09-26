@@ -37,12 +37,14 @@ tprsh-report --json --fail-on red gw.jsonl fx.jsonl   # machine-readable; exit 3
 | `LOG...` | Gateway and sensor JSONL logs, in any order and mix. `-` is stdin. |
 | `--workspace DIR` | Workspace used by the `rm` rule. Default: inferred per session (below). |
 | `--json` | Emit the report as JSON. |
+| `--no-redact` | Print argv, arguments and results verbatim. Default is to redact secrets on read (see below); this opts out and warns on stderr. |
 | `--fail-on yellow\|red` | Exit `3` when any item reaches that tier. |
 | `--window DUR` | For a tool call with no recorded result, how long afterwards its effects may occur. Default `10m`. |
 | `--slack DUR` | Clock skew tolerated between gateway and sensor timestamps. Default `2s`. |
 | `--taint-window DUR` | `credential-then-egress` fires only for egress within this long after the most recent credential read. Default `0`: the rest of the session. |
 | `--ignore-path DIR` | Absolute `DIR`. File writes under it are expected background activity (e.g. a harness's own state or cache directory). They are shown as `[ignored path]` and are never covert candidates. Repeatable. Credential reads are never ignored. |
-| `--protected-branch NAME` | Protected branch; a trailing `*` matches any suffix (`release/*`). Repeatable; replaces the default list. |
+| `--protected-branch NAME` | Protected branch; a trailing `*` matches any suffix (`release/*`). Repeatable; adds to the default list. |
+| `--replace-protected-branches` | Replace the default protected-branch list with the `--protected-branch` values instead of adding to it. Requires at least one `--protected-branch`. |
 | `--prod-context SUBSTR` | Case-insensitive substring marking a kubectl context as production. Repeatable; replaces the default `prod`. |
 | `--classifier URL` and related flags | Optional, advisory classifier pass (e.g. a local Kev). It annotates yellow and covert items and tool results, and never changes a tier. See [`classifier.md`](classifier.md). |
 
@@ -51,6 +53,13 @@ Events are grouped by `session_id`; events without one go into session
 replaying a Tetragon export is harmless. Malformed lines are counted and
 skipped. Sensor events that fail the effect contract (`sensor.Validate`) are
 counted and dropped.
+
+Redaction is write-time only in the gateway and sensor, so a log written with
+redaction disabled, or produced by another tool, may still hold secrets. The
+report therefore runs the default redactor over every event's argv, arguments
+and results on read, before anything is printed: text and `--json` output are
+redacted by default. `--no-redact` prints the raw values instead and warns on
+stderr. This is presentation only — it never changes a verdict.
 
 ## Linking effects to tool calls
 
