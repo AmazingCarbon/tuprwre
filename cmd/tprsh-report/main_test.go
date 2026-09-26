@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -36,7 +37,7 @@ func TestParseFlags(t *testing.T) {
 
 func TestRunText(t *testing.T) {
 	var out bytes.Buffer
-	code, err := run(&options{files: []string{gatewayLog, sensorLog}, window: time.Minute, slack: 2 * time.Second}, nil, &out)
+	code, err := run(&options{files: []string{gatewayLog, sensorLog}, window: time.Minute, slack: 2 * time.Second}, nil, &out, io.Discard)
 	if err != nil || code != 0 {
 		t.Fatalf("code = %d err = %v", code, err)
 	}
@@ -64,7 +65,7 @@ func TestRunFailOnAndStdin(t *testing.T) {
 		}
 		var out bytes.Buffer
 		code, err := run(&options{files: files, json: true, failOn: c.failOn, window: time.Minute, slack: time.Second},
-			strings.NewReader(c.input), &out)
+			strings.NewReader(c.input), &out, io.Discard)
 		if err != nil || code != c.code {
 			t.Errorf("fail-on %s: code = %d err = %v", c.failOn, code, err)
 		}
@@ -75,7 +76,7 @@ func TestRunFailOnAndStdin(t *testing.T) {
 }
 
 func TestRunMissingFile(t *testing.T) {
-	if _, err := run(&options{files: []string{filepath.Join(t.TempDir(), "nope.jsonl")}}, nil, &bytes.Buffer{}); err == nil {
+	if _, err := run(&options{files: []string{filepath.Join(t.TempDir(), "nope.jsonl")}}, nil, &bytes.Buffer{}, io.Discard); err == nil {
 		t.Error("missing file accepted")
 	}
 }
@@ -86,9 +87,22 @@ func TestParseFlagsRulesAndPrecision(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(opts.rules.ProtectedBranches, ",") != "stable,hotfix/*" || strings.Join(opts.rules.ProdContexts, ",") != "live" ||
+	wantBranches := append(append([]string{}, rules.DefaultConfig.ProtectedBranches...), "stable", "hotfix/*")
+	if strings.Join(opts.rules.ProtectedBranches, ",") != strings.Join(wantBranches, ",") ||
+		strings.Join(opts.rules.ProdContexts, ",") != "live" ||
 		strings.Join(opts.ignore, ",") != "/home/a/.cache" || opts.taint != 5*time.Minute {
 		t.Errorf("opts = %+v", opts)
+	}
+	// --replace-protected-branches swaps the defaults out.
+	replaced, err := parseFlags([]string{"--protected-branch", "stable", "--replace-protected-branches", "x"}, &bytes.Buffer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(replaced.rules.ProtectedBranches, ",") != "stable" {
+		t.Errorf("replace branches = %v", replaced.rules.ProtectedBranches)
+	}
+	if _, err := parseFlags([]string{"--replace-protected-branches", "x"}, &bytes.Buffer{}); err == nil {
+		t.Error("--replace-protected-branches without a branch accepted")
 	}
 	defaults, err := parseFlags([]string{"x"}, &bytes.Buffer{})
 	if err != nil {
@@ -108,11 +122,11 @@ func TestParseFlagsRulesAndPrecision(t *testing.T) {
 	var out bytes.Buffer
 	opts.files = []string{gatewayLog}
 	opts.json = true
-	if _, err := run(opts, nil, &out); err != nil {
+	if _, err := run(opts, nil, &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(out.String(), rules.RuleGitForcePushProtected) {
-		t.Error("main still protected with --protected-branch stable")
+	if !strings.Contains(out.String(), rules.RuleGitForcePushProtected) {
+		t.Error("main no longer protected: --protected-branch must add to the defaults")
 	}
 }
 
@@ -145,7 +159,7 @@ func TestRunWithClassifier(t *testing.T) {
 		return o
 	}
 	var out bytes.Buffer
-	if _, err := run(base(srv.URL), nil, &out); err != nil {
+	if _, err := run(base(srv.URL), nil, &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	var rep struct {
@@ -165,15 +179,43 @@ func TestRunWithClassifier(t *testing.T) {
 	deadURL := dead.URL
 	dead.Close()
 	out.Reset()
-	code, err := run(base(deadURL), nil, &out)
+	code, err := run(base(deadURL), nil, &out, io.Discard)
 	if err != nil || code != 0 || !json.Valid(out.Bytes()) || !strings.Contains(out.String(), `"errors": 7`) {
 		t.Errorf("dead classifier: code %d err %v", code, err)
 	}
 
-	if _, err := run(base("https://kev.example.com"), nil, &out); err == nil {
+	if _, err := run(base("https://kev.example.com"), nil, &out, io.Discard); err == nil {
 		t.Error("remote classifier accepted without --classifier-allow-remote")
 	}
 	if _, err := parseFlags([]string{"--classifier", "http://127.0.0.1:1", "--classifier-threshold", "1.5", "x"}, &bytes.Buffer{}); err == nil {
 		t.Error("threshold > 1 accepted")
+	}
+}
+
+// TestRunRedactsOnRead proves the default report path redacts secrets found
+// in the logs it reads (here the fake Bearer token in the contract session
+// fixture), in both text and --json output, and that --no-redact opts out.
+func TestRunRedactsOnRead(t *testing.T) {
+	const token = "fake-token-0123456789"
+	sensorFixture := filepath.Join("..", "..", "internal", "sensor", "testdata", "contract", "session.jsonl")
+
+	render := func(t *testing.T, opts *options) string {
+		t.Helper()
+		opts.files = []string{sensorFixture}
+		var out bytes.Buffer
+		if _, err := run(opts, nil, &out, io.Discard); err != nil {
+			t.Fatal(err)
+		}
+		return out.String()
+	}
+
+	if got := render(t, &options{}); strings.Contains(got, token) {
+		t.Errorf("text report leaked the token:\n%s", got)
+	}
+	if got := render(t, &options{json: true}); strings.Contains(got, token) {
+		t.Errorf("--json report leaked the token:\n%s", got)
+	}
+	if got := render(t, &options{noRedact: true}); !strings.Contains(got, token) {
+		t.Errorf("--no-redact should print the token verbatim:\n%s", got)
 	}
 }

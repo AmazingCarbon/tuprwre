@@ -33,6 +33,7 @@ type options struct {
 	files     []string
 	workspace string
 	json      bool
+	noRedact  bool
 	failOn    rules.Tier
 	window    time.Duration
 	slack     time.Duration
@@ -62,6 +63,7 @@ func parseFlags(args []string, stderr io.Writer) (*options, error) {
 	var (
 		workspace = fs.String("workspace", "", "agent workspace directory for the rm rule (default: inferred per session from the root process cwd)")
 		asJSON    = fs.Bool("json", false, "write the report as JSON")
+		noRedact  = fs.Bool("no-redact", false, "print argv/arguments/results verbatim; default is to redact secrets on read (WARNING: output may leak credentials)")
 		failOn    = fs.String("fail-on", "", `exit with status 3 when any item reaches this tier ("yellow" or "red")`)
 		window    = fs.Duration("window", report.DefaultWindow, "how long after a tool call with no recorded result its effects may occur")
 		slack     = fs.Duration("slack", report.DefaultSlack, "clock skew tolerated between gateway and sensor timestamps")
@@ -69,6 +71,8 @@ func parseFlags(args []string, stderr io.Writer) (*options, error) {
 		ignore    []string
 		branches  []string
 		prodCtx   []string
+
+		replaceBranches = fs.Bool("replace-protected-branches", false, "replace the default protected branches with --protected-branch values instead of adding to them")
 
 		classifier       = fs.String("classifier", "", "optional System One classifier (e.g. a local Kev: http://127.0.0.1:8009); advisory only, never changes a tier")
 		classifierModel  = fs.String("classifier-model", "kev-latest", "model name sent to the classifier")
@@ -84,8 +88,8 @@ func parseFlags(args []string, stderr io.Writer) (*options, error) {
 		ignore = append(ignore, v)
 		return nil
 	})
-	fs.Func("protected-branch", `protected branch name, trailing "*" for a prefix (repeatable; replaces the defaults `+
-		strings.Join(rules.DefaultConfig.ProtectedBranches, ",")+")", func(v string) error {
+	fs.Func("protected-branch", `protected branch name, trailing "*" for a prefix (repeatable; adds to the defaults `+
+		strings.Join(rules.DefaultConfig.ProtectedBranches, ",")+"; use --replace-protected-branches to replace them)", func(v string) error {
 		branches = append(branches, v)
 		return nil
 	})
@@ -96,7 +100,7 @@ func parseFlags(args []string, stderr io.Writer) (*options, error) {
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
-	opts := &options{files: fs.Args(), workspace: *workspace, json: *asJSON, window: *window, slack: *slack,
+	opts := &options{files: fs.Args(), workspace: *workspace, json: *asJSON, noRedact: *noRedact, window: *window, slack: *slack,
 		taint: *taint, ignore: ignore, rules: rules.DefaultConfig,
 		classifier: *classifier, classifierModel: *classifierModel, classifierThresh: *classifierThresh,
 		classifierMax: *classifierMax, classifierTO: *classifierTO, classifierRemote: *classifierRemote}
@@ -104,7 +108,15 @@ func parseFlags(args []string, stderr io.Writer) (*options, error) {
 		return nil, errors.New("--classifier-threshold must be in (0,1]; --classifier-max and --classifier-timeout positive")
 	}
 	if len(branches) > 0 {
-		opts.rules.ProtectedBranches = branches
+		if *replaceBranches {
+			opts.rules.ProtectedBranches = branches
+		} else {
+			// Add to the defaults: a protected-branch list is a safety
+			// list, so one extra branch must not silently drop main/master.
+			opts.rules.ProtectedBranches = append(append([]string{}, rules.DefaultConfig.ProtectedBranches...), branches...)
+		}
+	} else if *replaceBranches {
+		return nil, errors.New("--replace-protected-branches requires at least one --protected-branch")
 	}
 	if len(prodCtx) > 0 {
 		opts.rules.ProdContexts = prodCtx
@@ -134,7 +146,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "tprsh-report:", err)
 		os.Exit(2)
 	}
-	code, err := run(opts, os.Stdin, os.Stdout)
+	code, err := run(opts, os.Stdin, os.Stdout, os.Stderr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "tprsh-report:", err)
 		os.Exit(1)
@@ -143,7 +155,7 @@ func main() {
 }
 
 // run builds and writes the report, returning the process exit status.
-func run(opts *options, stdin io.Reader, stdout io.Writer) (int, error) {
+func run(opts *options, stdin io.Reader, stdout, stderr io.Writer) (int, error) {
 	var readers []io.Reader
 	for _, name := range opts.files {
 		if name == "-" {
@@ -160,6 +172,11 @@ func run(opts *options, stdin io.Reader, stdout io.Writer) (int, error) {
 	events, st, err := report.Load(readers...)
 	if err != nil {
 		return 0, err
+	}
+	if opts.noRedact {
+		fmt.Fprintln(stderr, "tprsh-report: WARNING: --no-redact: output is not redacted; secrets in the logs may be printed")
+	} else if n := report.Redact(events); n > 0 {
+		fmt.Fprintf(stderr, "tprsh-report: redacted %d secret(s) on read\n", n)
 	}
 	cfg := opts.rules
 	if cfg.ProtectedBranches == nil && cfg.ProdContexts == nil {
