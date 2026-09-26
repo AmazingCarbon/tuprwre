@@ -80,7 +80,7 @@ func TestContractFixturesValid(t *testing.T) {
 			}
 		})
 	}
-	for _, k := range EffectKinds {
+	for _, k := range EffectKinds() {
 		if !seenKinds[k] {
 			t.Errorf("no valid fixture for effect kind %q", k)
 		}
@@ -168,5 +168,25 @@ func TestValidateRejectsMissingKindPayload(t *testing.T) {
 	e.Net.SrcAddr = "2001:db8::2"
 	if err := Validate(e); err != nil {
 		t.Errorf("ipv6 udp: %v", err)
+	}
+}
+
+// TestEffectKindsImmutable proves EffectKinds returns an independent copy:
+// mutating it does not change what IsEffect or later calls see.
+func TestEffectKindsImmutable(t *testing.T) {
+	got := EffectKinds()
+	if len(got) == 0 {
+		t.Fatal("no effect kinds")
+	}
+	want := got[0]
+	got[0] = event.Kind("tampered")
+	if k := EffectKinds()[0]; k != want {
+		t.Errorf("EffectKinds() leaked a mutable slice: %q became %q", want, k)
+	}
+	if IsEffect(event.Kind("tampered")) {
+		t.Error("IsEffect saw a tampered kind")
+	}
+	if !IsEffect(want) {
+		t.Errorf("IsEffect(%q) = false after tampering", want)
 	}
 }

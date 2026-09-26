@@ -9,8 +9,9 @@ import (
 	"github.com/c4rb0nx1/tuprwre/internal/event"
 )
 
-// EffectKinds lists the event kinds a sensor may emit.
-var EffectKinds = []event.Kind{
+// effectKinds is the canonical list of event kinds a sensor may emit. It is
+// unexported so callers cannot mutate the contract; use EffectKinds for a copy.
+var effectKinds = []event.Kind{
 	event.KindExec,
 	event.KindFileWrite,
 	event.KindFileReadSensitive,
@@ -18,9 +19,15 @@ var EffectKinds = []event.Kind{
 	event.KindProcExit,
 }
 
+// EffectKinds returns a fresh copy of the event kinds a sensor may emit.
+// Callers may modify the result without affecting the contract.
+func EffectKinds() []event.Kind {
+	return append([]event.Kind(nil), effectKinds...)
+}
+
 // IsEffect reports whether k is an effect kind.
 func IsEffect(k event.Kind) bool {
-	for _, e := range EffectKinds {
+	for _, e := range effectKinds {
 		if k == e {
 			return true
 		}
