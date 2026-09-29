@@ -13,7 +13,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/c4rb0nx1/tuprwre/internal/tprsh"
+	"github.com/AmazingCarbon/tuprwre/internal/tprsh"
 )
 
 func main() {

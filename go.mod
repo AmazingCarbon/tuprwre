@@ -1,4 +1,4 @@
-module github.com/c4rb0nx1/tuprwre
+module github.com/AmazingCarbon/tuprwre
 
 go 1.25.4
 

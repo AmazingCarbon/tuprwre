@@ -2,17 +2,17 @@
 
 > Keep host systems safe when automation installs software.
 
-[![CI](https://github.com/c4rb0nx1/tuprwre/actions/workflows/ci.yml/badge.svg)](https://github.com/c4rb0nx1/tuprwre/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/tag/c4rb0nx1/tuprwre?label=release)](https://github.com/c4rb0nx1/tuprwre/releases)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/c4rb0nx1/tuprwre)](https://golang.org)
-[![License](https://img.shields.io/github/license/c4rb0nx1/tuprwre)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/c4rb0nx1/tuprwre)](https://github.com/c4rb0nx1/tuprwre/stargazers)
+[![CI](https://github.com/AmazingCarbon/tuprwre/actions/workflows/ci.yml/badge.svg)](https://github.com/AmazingCarbon/tuprwre/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/tag/AmazingCarbon/tuprwre?label=release)](https://github.com/AmazingCarbon/tuprwre/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/AmazingCarbon/tuprwre)](https://golang.org)
+[![License](https://img.shields.io/github/license/AmazingCarbon/tuprwre)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/AmazingCarbon/tuprwre)](https://github.com/AmazingCarbon/tuprwre/stargazers)
 
 `tuprwre` intercepts and blocks risky install commands (`apt`, `pip`, `curl/wget`), guiding users to run them safely inside disposable Docker containers via `tuprwre install`.
 
 [![Demo](https://asciinema.org/a/lGrhGS4fVlOgWuvO.svg)](https://asciinema.org/a/lGrhGS4fVlOgWuvO)
 
-[More demos](docs/demos.md) · [Architecture](ARCHITECTURE.md) · [Releases](https://github.com/c4rb0nx1/tuprwre/releases) · [Discussions](https://github.com/c4rb0nx1/tuprwre/discussions)
+[More demos](docs/demos.md) · [Architecture](ARCHITECTURE.md) · [Releases](https://github.com/AmazingCarbon/tuprwre/releases) · [Discussions](https://github.com/AmazingCarbon/tuprwre/discussions)
 
 ## TL;DR
 
@@ -50,7 +50,7 @@ Prerequisites:
 - Docker CLI + running Docker daemon
 
 ```bash
-git clone https://github.com/c4rb0nx1/tuprwre
+git clone https://github.com/AmazingCarbon/tuprwre
 cd tuprwre
 
 make build
@@ -82,7 +82,7 @@ jq --version
 
 Compatibility: Cursor / Claude Code / OpenCode via `tuprwre shell -c "<command>"`.
 
-If this project helps your agent workflows, please **⭐ star** this repo and consider **sponsoring** the project: [Star](https://github.com/c4rb0nx1/tuprwre) · [Sponsor](https://github.com/sponsors/c4rb0nx1)
+If this project helps your agent workflows, please **⭐ star** this repo and consider **sponsoring** the project: [Star](https://github.com/AmazingCarbon/tuprwre) · [Sponsor](https://github.com/sponsors/c4rb0nx1)
 
 > **Tip** If you see "Command blocked", that's expected — rerun with `tuprwre install -- "<command>"`.
 
@@ -196,9 +196,9 @@ Yes. Use `--read-only-cwd`, `--no-network`, `--memory`, and `--cpus` with `tuprw
 
 ## Support
 
-- **Bug reports**: [Open an issue](https://github.com/c4rb0nx1/tuprwre/issues/new?template=bug_report.yml)
-- **Feature requests**: [Open an issue](https://github.com/c4rb0nx1/tuprwre/issues/new?template=feature_request.yml)
-- **Questions & discussion**: [GitHub Discussions](https://github.com/c4rb0nx1/tuprwre/discussions)
+- **Bug reports**: [Open an issue](https://github.com/AmazingCarbon/tuprwre/issues/new?template=bug_report.yml)
+- **Feature requests**: [Open an issue](https://github.com/AmazingCarbon/tuprwre/issues/new?template=feature_request.yml)
+- **Questions & discussion**: [GitHub Discussions](https://github.com/AmazingCarbon/tuprwre/discussions)
 
 ## License
 

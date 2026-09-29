@@ -14,7 +14,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 
-	"github.com/c4rb0nx1/tuprwre/internal/dockerctx"
+	"github.com/AmazingCarbon/tuprwre/internal/dockerctx"
 )
 
 const (

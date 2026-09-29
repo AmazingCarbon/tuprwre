@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/c4rb0nx1/tuprwre/internal/config"
-	"github.com/c4rb0nx1/tuprwre/internal/shim"
+	"github.com/AmazingCarbon/tuprwre/internal/config"
+	"github.com/AmazingCarbon/tuprwre/internal/shim"
 	"github.com/spf13/cobra"
 )
 

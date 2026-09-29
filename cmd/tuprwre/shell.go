@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/c4rb0nx1/tuprwre/internal/config"
+	"github.com/AmazingCarbon/tuprwre/internal/config"
 	"github.com/spf13/cobra"
 )
 

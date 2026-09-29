@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/c4rb0nx1/tuprwre/internal/sandbox/pool"
+	"github.com/AmazingCarbon/tuprwre/internal/sandbox/pool"
 )
 
 // adminPool returns a pool handle for management commands. Unlike initPool it
