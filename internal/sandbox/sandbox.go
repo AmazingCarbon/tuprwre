@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/c4rb0nx1/tuprwre/internal/config"
-	"github.com/c4rb0nx1/tuprwre/internal/dockerctx"
-	"github.com/c4rb0nx1/tuprwre/internal/sandbox/pool"
+	"github.com/AmazingCarbon/tuprwre/internal/config"
+	"github.com/AmazingCarbon/tuprwre/internal/dockerctx"
+	"github.com/AmazingCarbon/tuprwre/internal/sandbox/pool"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"

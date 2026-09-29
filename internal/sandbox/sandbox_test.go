@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/client"
-	"github.com/c4rb0nx1/tuprwre/internal/config"
-	"github.com/c4rb0nx1/tuprwre/internal/dockerctx"
+	"github.com/AmazingCarbon/tuprwre/internal/config"
+	"github.com/AmazingCarbon/tuprwre/internal/dockerctx"
 )
 
 // skipOrFailNoDocker skips docker-dependent tests when the daemon is absent,
